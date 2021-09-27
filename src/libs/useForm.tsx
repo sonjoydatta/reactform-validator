@@ -3,7 +3,7 @@ import { ChangeEvent, Dispatch, FormEvent, SetStateAction, useState } from 'reac
 export const useForm = <T, K>(props: PropsType<T, K>): ReturnType<T, K> => {
 	const { initialValues, initialErrors = {}, validate = null, onCallback } = props;
 	const [values, setValues] = useState<T>(initialValues);
-	const [errors, setErrors] = useState<K | Record<string, never>>(initialErrors);
+	const [errors, setErrors] = useState<K>(initialErrors as K);
 
 	/**
 	 * Check if all properties is NULL
@@ -70,8 +70,8 @@ type PropsType<T, K> = {
 type ReturnType<T, K> = {
 	values: T;
 	setValues: Dispatch<SetStateAction<T>>;
-	errors: K | Record<string, never>;
-	setErrors: Dispatch<SetStateAction<K | Record<string, never>>>;
+	errors: K;
+	setErrors: Dispatch<SetStateAction<K>>;
 	handleChange: (e: ChangeEvent<FormElement>) => void;
 	handleSubmit: (e: FormEvent<HTMLFormElement>) => void;
 };
