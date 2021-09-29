@@ -1,21 +1,29 @@
 import { ChangeEvent, Dispatch, FormEvent, SetStateAction, useState } from 'react';
+import { isNullProperties } from './utils/validate.helpers';
 
-export const useForm = <T, K>(props: PropsType<T, K>): ReturnType<T, K> => {
-	const { initialValues, initialErrors = {}, validate = null, onCallback } = props;
-	const [values, setValues] = useState<T>(initialValues);
-	const [errors, setErrors] = useState<K>(initialErrors as K);
-
+export const useForm = <T,>(initialState: T, onCallback: (data: IUseFormValues<T>) => void): ReturnType<T> => {
 	/**
-	 * Check if all properties is NULL
-	 * @param obj
+	 * Get initial values & errors
 	 * @returns
 	 */
-	const isNullProperties = (obj: Record<string, any>): boolean => {
-		for (const key in obj) {
-			if (obj[key] !== null && obj[key] !== '') return false;
+	const getInitialData = () => {
+		const valuesObj = {} as IUseFormValues<T>;
+		const errorsObj = {} as IUseFormErrors<T>;
+
+		for (const key in initialState) {
+			const value = initialState[key] as unknown as { value: string; message: string };
+			valuesObj[key] = value?.value || '';
+			errorsObj[key] = value?.message || null;
 		}
-		return true;
+
+		return {
+			valuesObj,
+			errorsObj,
+		};
 	};
+
+	const [values, setValues] = useState<IUseFormValues<T>>({ ...getInitialData().valuesObj });
+	const [errors, setErrors] = useState<IUseFormErrors<T>>({ ...getInitialData().errorsObj });
 
 	/**
 	 * Change event handler for `HTMLInputElement` `HTMLSelectElement` `HTMLTextAreaElement`
@@ -23,15 +31,17 @@ export const useForm = <T, K>(props: PropsType<T, K>): ReturnType<T, K> => {
 	 */
 	const handleChange = (e: ChangeEvent<FormElement>) => {
 		const { name, type, value } = e.target;
-		if (validate !== null) {
-			const errorsData = validate({ [name]: value } as any);
-			setErrors((prevState) => ({ ...prevState, ...errorsData }));
+		const validate = (initialState[name as keyof T] as any)?.validate;
+		if (validate) {
+			const error = validate(name, value) || null;
+			setErrors((v) => ({ ...v, [name]: error }));
 		}
+
 		if (type === 'checkbox') {
 			const { checked } = e.target as HTMLInputElement;
-			setValues((prevState) => ({ ...prevState, [name]: checked }));
+			setValues((v) => ({ ...v, [name]: checked }));
 		} else {
-			setValues((prevState) => ({ ...prevState, [name]: value }));
+			setValues((v) => ({ ...v, [name]: value }));
 		}
 	};
 
@@ -41,10 +51,16 @@ export const useForm = <T, K>(props: PropsType<T, K>): ReturnType<T, K> => {
 	 */
 	const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
 		e.preventDefault();
-		if (validate !== null) {
-			const errorsData = validate(values);
-			setErrors((prevState) => ({ ...prevState, ...errorsData }));
-			if (errorsData && isNullProperties(errorsData)) onCallback(values);
+		const errorsObj = {} as IUseFormErrors<T>;
+
+		for (const key in values) {
+			const value = values[key];
+			const validate = (initialState[key as keyof T] as any)?.validate;
+			if (validate) errorsObj[key] = validate(key, value) || null;
+		}
+
+		if (!isNullProperties(errorsObj)) {
+			setErrors(errorsObj);
 		} else {
 			onCallback(values);
 		}
@@ -60,18 +76,14 @@ export const useForm = <T, K>(props: PropsType<T, K>): ReturnType<T, K> => {
 	};
 };
 
-type PropsType<T, K> = {
-	initialValues: T;
-	initialErrors?: K;
-	validate?: (values: Partial<T>) => Partial<K> | null;
-	onCallback: (values: T) => void;
-};
+export type IUseFormValues<T> = Record<keyof T, string>;
+export type IUseFormErrors<T> = Record<keyof T, string | null>;
 
-type ReturnType<T, K> = {
-	values: T;
-	setValues: Dispatch<SetStateAction<T>>;
-	errors: K;
-	setErrors: Dispatch<SetStateAction<K>>;
+type ReturnType<T> = {
+	values: IUseFormValues<T>;
+	errors: IUseFormErrors<T>;
+	setValues: Dispatch<SetStateAction<IUseFormValues<T>>>;
+	setErrors: Dispatch<SetStateAction<IUseFormErrors<T>>>;
 	handleChange: (e: ChangeEvent<FormElement>) => void;
 	handleSubmit: (e: FormEvent<HTMLFormElement>) => void;
 };

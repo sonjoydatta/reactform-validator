@@ -1,38 +1,13 @@
 import { FC } from 'react';
-import { appValidations as validate } from './libs/app.validations';
-// import { FormValidator } from './libs/formValidator';
-import { useForm } from './libs/useForm';
+import { IUseFormValues, useForm } from './libs/useForm';
+import { isEmail, isMinLength, isNotEmpty } from './libs/utils/validate.helpers';
 
-export const initialValues = { email: '', description: '' };
-export const initialErrors: IInitialErrors = { email: null, description: null };
 const App: FC = () => {
-	// const [formData, setFormData] = useState({ values: initialValues, errors: initialErrors });
-
-	const onCallback = (data: typeof initialValues) => {
+	const onCallback = (data: IUseFormValues<typeof initialState>) => {
 		console.log(data);
 	};
 
-	/**
-	 * Validate with React hooks
-	 */
-	const { values, errors, handleChange, handleSubmit } = useForm({
-		initialValues,
-		initialErrors,
-		validate,
-		onCallback,
-	});
-
-	/**
-	 * Validate class validator
-	 */
-	// const { handleChange, handleSubmit } = new FormValidator(
-	// 	formData.values,
-	// 	formData.errors,
-	// 	validate,
-	// 	setFormData,
-	// 	onCallback,
-	// );
-	// const { values, errors } = formData;
+	const { values, errors, handleChange, handleSubmit } = useForm(initialState, onCallback);
 
 	return (
 		<div className="App">
@@ -45,10 +20,25 @@ const App: FC = () => {
 									Email address
 								</label>
 								<input
+									type="text"
+									name="name"
+									className={`form-control${errors.name ? ' is-invalid' : ''}`}
+									id="exampleFormControlInput1"
+									placeholder="John Doe"
+									onChange={handleChange}
+									value={values.name}
+								/>
+								<div className="invalid-feedback">{errors.name}</div>
+							</div>
+							<div className="mb-3">
+								<label htmlFor="exampleFormControlInput2" className="form-label">
+									Email address
+								</label>
+								<input
 									type="email"
 									name="email"
 									className={`form-control${errors.email ? ' is-invalid' : ''}`}
-									id="exampleFormControlInput1"
+									id="exampleFormControlInput2"
 									placeholder="name@example.com"
 									onChange={handleChange}
 									value={values.email}
@@ -82,7 +72,19 @@ const App: FC = () => {
 
 export default App;
 
-type IInitialErrors = {
-	email: null | string;
-	description: null | string;
+const initialState = {
+	name: {
+		value: '',
+		message: null,
+		validate: (name: string, value: string) => isNotEmpty(name, value, () => isMinLength(name, value)),
+	},
+	email: {
+		value: '',
+		message: null,
+		validate: (name: string, value: string) => isNotEmpty(name, value, () => isEmail(value)),
+	},
+	description: {
+		value: '',
+		message: null,
+	},
 };
