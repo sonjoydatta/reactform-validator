@@ -1,18 +1,18 @@
-export const isNotEmpty = (name: string, value: string, onCallback?: VoidFunction): string | void => {
+export const isNotEmpty = (name: string, value: string): string | undefined => {
 	if (value.trim().length < 1) return `${formatValidatorKey(name)} is required`;
-	return isNotUndefined(onCallback);
 };
 
-export const isMinLength = (name: string, value: string, length = 3, onCallback?: VoidFunction): string | void => {
-	if (value.trim().length < length) return `${formatValidatorKey(name)} should be at least ${length} characters long`;
-	return isNotUndefined(onCallback);
+export const isMinLength = (length = 3) => {
+	return (name: string, value: string): string | undefined => {
+		if (value.trim().length < length)
+			return `${formatValidatorKey(name)} should be at least ${length} characters long`;
+	};
 };
 
-export const isEmail = (email: string, onCallback?: VoidFunction): string | void => {
+export const isEmail = (name: string, email: string): string | undefined => {
 	const regex = /^([\w\.\-]+)@([\w\-]+)((\.(\w){2,3})+)$/; // eslint-disable-line
 	const isValid = regex.test(String(email).toLowerCase());
 	if (!isValid) return 'Email address is invalid';
-	return isNotUndefined(onCallback);
 };
 
 export const isNullProperties = (obj: Record<string, any>): boolean => {
@@ -20,10 +20,6 @@ export const isNullProperties = (obj: Record<string, any>): boolean => {
 		if (obj[key] !== null && obj[key] !== '') return false;
 	}
 	return true;
-};
-
-const isNotUndefined = (onCallback?: VoidFunction): void => {
-	if (onCallback && typeof onCallback !== 'undefined') return onCallback();
 };
 
 const formatValidatorKey = (value: string): string => {

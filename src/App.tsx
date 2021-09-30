@@ -3,11 +3,11 @@ import { IUseFormValues, useForm } from './libs/useForm';
 import { isEmail, isMinLength, isNotEmpty } from './libs/utils/validate.helpers';
 
 const App: FC = () => {
-	const onCallback = (data: IUseFormValues<typeof initialState>) => {
+	const onSuccess = (data: IUseFormValues<typeof initialState>) => {
 		console.log(data);
 	};
 
-	const { values, errors, handleChange, handleSubmit } = useForm(initialState, onCallback);
+	const { values, errors, handleChange, handleSubmit } = useForm(initialState, onSuccess);
 
 	return (
 		<div className="App">
@@ -17,7 +17,7 @@ const App: FC = () => {
 						<form onSubmit={handleSubmit} noValidate>
 							<div className="mb-3">
 								<label htmlFor="exampleFormControlInput1" className="form-label">
-									Email address
+									Name
 								</label>
 								<input
 									type="text"
@@ -76,12 +76,12 @@ const initialState = {
 	name: {
 		value: '',
 		message: null,
-		validate: (name: string, value: string) => isNotEmpty(name, value, () => isMinLength(name, value)),
+		validate: [isNotEmpty, isMinLength(5)],
 	},
 	email: {
 		value: '',
 		message: null,
-		validate: (name: string, value: string) => isNotEmpty(name, value, () => isEmail(value)),
+		validate: [isNotEmpty, isEmail],
 	},
 	description: {
 		value: '',

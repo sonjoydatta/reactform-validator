@@ -1,7 +1,10 @@
 import { ChangeEvent, Dispatch, FormEvent, SetStateAction, useState } from 'react';
 import { isNullProperties } from './utils/validate.helpers';
 
-export const useForm = <T,>(initialState: T, onCallback: (data: IUseFormValues<T>) => void): ReturnType<T> => {
+export const useForm = <T extends PropsType>(
+	initialState: T,
+	onSuccess: (data: IUseFormValues<T>) => void,
+): ReturnType<T> => {
 	/**
 	 * Get initial values & errors
 	 * @returns
@@ -31,11 +34,11 @@ export const useForm = <T,>(initialState: T, onCallback: (data: IUseFormValues<T
 	 */
 	const handleChange = (e: ChangeEvent<FormElement>) => {
 		const { name, type, value } = e.target;
-		const validate = (initialState[name as keyof T] as any)?.validate;
-		if (validate) {
-			const error = validate(name, value) || null;
+
+		initialState[name].validate?.forEach((validator) => {
+			const error = validator(name, value) || null;
 			setErrors((v) => ({ ...v, [name]: error }));
-		}
+		});
 
 		if (type === 'checkbox') {
 			const { checked } = e.target as HTMLInputElement;
@@ -53,16 +56,16 @@ export const useForm = <T,>(initialState: T, onCallback: (data: IUseFormValues<T
 		e.preventDefault();
 		const errorsObj = {} as IUseFormErrors<T>;
 
-		for (const key in values) {
-			const value = values[key];
-			const validate = (initialState[key as keyof T] as any)?.validate;
-			if (validate) errorsObj[key] = validate(key, value) || null;
+		for (const [key, value] of Object.entries(values)) {
+			initialState[key].validate?.forEach((validator) => {
+				if (!(key in errorsObj)) (errorsObj[key] as any) = validator(key, value) || null;
+			});
 		}
 
 		if (!isNullProperties(errorsObj)) {
 			setErrors(errorsObj);
 		} else {
-			onCallback(values);
+			onSuccess(values);
 		}
 	};
 
@@ -78,6 +81,16 @@ export const useForm = <T,>(initialState: T, onCallback: (data: IUseFormValues<T
 
 export type IUseFormValues<T> = Record<keyof T, string>;
 export type IUseFormErrors<T> = Record<keyof T, string | null>;
+
+type ValueType = {
+	value: string;
+	message: string | null;
+	validate?: ((name: string, value: string) => string | undefined)[];
+};
+
+type PropsType = {
+	[key: string]: ValueType;
+};
 
 type ReturnType<T> = {
 	values: IUseFormValues<T>;
