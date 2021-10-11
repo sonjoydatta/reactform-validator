@@ -15,7 +15,11 @@ export const isEmail = (name: string, email: string): string | undefined => {
 	if (!isValid) return 'Email address is invalid';
 };
 
-export const isNullProperties = (obj: Record<string, any>): boolean => {
+export const isEqual = (name: string, value: string, value2: string | null): string | undefined => {
+	if (value !== value2) return `${formatValidatorKey(name)} does not match`;
+};
+
+export const isNullProperties = (obj: Record<string, unknown>): boolean => {
 	for (const key in obj) {
 		if (obj[key] !== null && obj[key] !== '') return false;
 	}

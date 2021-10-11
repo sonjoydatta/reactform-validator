@@ -1,5 +1,5 @@
 import { ChangeEvent, Dispatch, FormEvent, SetStateAction, useState } from 'react';
-import { isNullProperties } from './utils/validate.helpers';
+import { isEqual, isNullProperties } from './utils/validate.helpers';
 
 export const useForm = <T extends PropsType>(
 	initialState: T,
@@ -36,7 +36,9 @@ export const useForm = <T extends PropsType>(
 		const { name, type, value } = e.target;
 
 		initialState[name].validate?.forEach((validator) => {
-			const error = validator(name, value) || null;
+			const equalKey = initialState[name]?.equalTo;
+			let error = validator(name, value) || null;
+			if (!error && equalKey) error = isEqual(name, value, values[equalKey]) || null;
 			setErrors((v) => ({ ...v, [name]: error }));
 		});
 
@@ -58,7 +60,10 @@ export const useForm = <T extends PropsType>(
 
 		for (const [key, value] of Object.entries(values)) {
 			initialState[key].validate?.forEach((validator) => {
-				if (!(key in errorsObj)) (errorsObj[key] as any) = validator(key, value) || null;
+				const equalKey = initialState[key]?.equalTo;
+				if (!(key in errorsObj)) errorsObj[key as keyof IUseFormErrors<T>] = validator(key, value) || null;
+				if (!errorsObj[key] && equalKey)
+					errorsObj[key as keyof IUseFormErrors<T>] = isEqual(key, value, values[equalKey]) || null;
 			});
 		}
 
@@ -85,6 +90,7 @@ export type IUseFormErrors<T> = Record<keyof T, string | null>;
 type ValueType = {
 	value: string;
 	message: string | null;
+	equalTo?: string;
 	validate?: ((name: string, value: string) => string | undefined)[];
 };
 
