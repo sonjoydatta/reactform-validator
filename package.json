@@ -1,5 +1,5 @@
 {
-	"name": "react-form-validation",
+	"name": "reactform-validator",
 	"author": {
 		"email": "sonjoy.dat@gmail.com",
 		"name": "Sonjoy Datta",
@@ -18,11 +18,15 @@
 	},
 	"repository": {
 		"type": "git",
-		"url": "git+https://github.com/sonjoydatta/react-form-validation.git"
+		"url": "git+https://github.com/sonjoydatta/reactform-validator.git"
 	},
 	"scripts": {
 		"build": "tsc",
-		"ci": "yarn --frozen-lockfile"
+		"ci": "yarn --frozen-lockfile",
+		"check:format": "prettier -c .",
+		"check:lint": "eslint .",
+		"format": "prettier -c -w .",
+		"lint:fix": "eslint --fix ."
 	},
 	"eslintConfig": {
 		"extends": [
